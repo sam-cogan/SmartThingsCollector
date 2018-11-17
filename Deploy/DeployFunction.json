@@ -59,7 +59,8 @@
         "functionName": "[concat(parameters('FunctionName'),take(uniqueString(resourceGroup().id),5))]",
         "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]",
         "CosmosResourceId": "[resourceId(parameters('CosmosDBResourceGroup'),'Microsoft.DocumentDB/databaseAccounts', parameters('CosmosDBAccount'))]",
-        "CosmosApiVersion": "[providers('Microsoft.DocumentDB', 'databaseAccounts').apiVersions[0]]"
+        "CosmosApiVersion": "[providers('Microsoft.DocumentDB', 'databaseAccounts').apiVersions[0]]",
+        "FunctionZipName": "SmartThingsCollector.zip"
 
     },
     "resources": [
@@ -89,6 +90,9 @@
                     "type": "blobServices/containers",
                     "apiVersion": "2018-03-01-preview",
                     "name": "[concat('default/', 'functionfiles')]",
+                    "properties": {
+                        "publicAccess": "Blob"
+                    },
                     "dependsOn": [
                         "[variables('StorageAccountName')]"
                     ]
@@ -107,20 +111,33 @@
                 "containers": [
                     {
                         "name": "[concat(variables('StorageAccountName'),'-aci')]",
+                        
                         "properties": {
-                            "command":["[concat('azcopy /Source:https://scartifactstorage.blob.core.windows.net/smartthingscollector /Dest:https://',variables('storageAccountName'),'.blob.core.windows.net/functionfiles /DestKey:',listKeys(variables('storageAccountid'),'2015-05-01-preview').key1,' /Pattern:SmartThingsCollector.zip')]"],
+                            "command":["azcopy",
+                                 "--source",
+                                 "https://scartifactstorage.blob.core.windows.net/smartthingscollector",
+                                 "--destination",
+                                 "[concat('https://',variables('storageAccountName'),'.blob.core.windows.net/functionfiles')]",
+                                 "--dest-key",
+                                 "[listKeys(variables('storageAccountid') ,'2015-05-01-preview').key1]",
+                                 "--include",
+                                 "SmartThingsCollector.zip",
+                                 "--quiet"
+                                ],
+                           
                             "image": "samcogan/azcopy",
-                
+                            
                             "resources": {
                                 "requests": {
                                     "cpu": 1,
-                                    "memoryInGB": 0.5
+                                    "memoryInGB": 1
                                 }
                             }
                         }
                     }
                 ],
-                "osType": "Linux"
+                "osType": "Linux",
+                "restartPolicy": "Never"
                 
             }
         },
@@ -146,7 +163,8 @@
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', concat(variables('FunctionName'),'-plan'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]",
+                "[resourceId('Microsoft.ContainerInstance/containerGroups', concat(variables('StorageAccountName'),'-aci'))]"
             ],
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(variables('FunctionName'),'-plan'))]",
@@ -165,14 +183,6 @@
                         {
                             "name": "AzureWebJobsStorage",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
-                        },
-                        {
-                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
-                        },
-                        {
-                            "name": "WEBSITE_CONTENTSHARE",
-                            "value": "[toLower(variables('FunctionName'))]"
                         },
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
@@ -205,6 +215,10 @@
                         {
                             "name": "StorageAccountKeySecretName",
                             "value": "StorageAccountKeySecret"
+                        },
+                        {
+                            "name": "WEBSITE_RUN_FROM_PACKAGE",
+                            "value": "[concat('https://',variables('storageAccountName'),'.blob.core.windows.net/functionfiles/', variables('FunctionZipName'))]"
                         }
                     ]
                 }
