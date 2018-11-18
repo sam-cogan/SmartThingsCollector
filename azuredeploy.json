@@ -6,13 +6,15 @@
             "type": "string",
             "metadata": {
                 "description": "Name of Azure Keyvault to retrieve secrets from"
-            }
+            },
+            "defaultValue": "STCaptureKV"
         },
         "StorageAccountName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the storage account to store and  retrieve event data from"
-            }
+            },
+            "defaultValue": "stcapturestg"
         },
         "CaptureContainerName": {
             "type": "string",
@@ -32,7 +34,8 @@
             "type": "string",
             "metadata": {
                 "description": "Name for the Azure Function to Create"
-            }
+            },
+            "defaultValue": "STCaptureFunc"
         },
         "FunctionIntervalInMinutes": {
             "type": "string",
