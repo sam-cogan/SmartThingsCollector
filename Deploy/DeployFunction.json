@@ -14,12 +14,19 @@
                 "description": "Name of the storage account to store and  retrieve event data from"
             }
         },
-        "ContainerName": {
+        "CaptureContainerName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the container in the storage account to store and retrieve event data from"
             },
             "defaultValue": "eventcapture"
+        },
+        "FunctionContainerName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the container in the storage account to store and retrieve event data from"
+            },
+            "defaultValue": "functionfiles"
         },
         "FunctionName": {
             "type": "string",
@@ -38,6 +45,12 @@
             "type": "string",
             "metadata": {
                 "description": "Name of Cosmos DB Account to store data in"
+            }
+        },
+        "CosmosDBDatabase": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of Cosmos DB Database to store data in"
             }
         },
         "CosmosDBCollection": {
@@ -81,7 +94,7 @@
                 {
                     "type": "blobServices/containers",
                     "apiVersion": "2018-03-01-preview",
-                    "name": "[concat('default/', parameters('ContainerName'))]",
+                    "name": "[concat('default/', parameters('CaptureContainerName'))]",
                     "dependsOn": [
                         "[variables('StorageAccountName')]"
                     ]
@@ -89,7 +102,7 @@
                 {
                     "type": "blobServices/containers",
                     "apiVersion": "2018-03-01-preview",
-                    "name": "[concat('default/', 'functionfiles')]",
+                    "name": "[concat('default/', parameters('FunctionContainerName'))]",
                     "properties": {
                         "publicAccess": "Blob"
                     },
@@ -117,7 +130,7 @@
                                  "--source",
                                  "https://scartifactstorage.blob.core.windows.net/smartthingscollector",
                                  "--destination",
-                                 "[concat('https://',variables('storageAccountName'),'.blob.core.windows.net/functionfiles')]",
+                                 "[concat('https://',variables('storageAccountName'),'.blob.core.windows.net/',parameters('FunctionContainerName'))]",
                                  "--dest-key",
                                  "[listKeys(variables('storageAccountid') ,'2015-05-01-preview').key1]",
                                  "--include",
@@ -198,7 +211,7 @@
                         },
                         {
                             "name": "StorageContainerName",
-                            "value": "[parameters('ContainerName')]"
+                            "value": "[parameters('CaptureContainerName')]"
                         },
                         {
                             "name": "TimerInterval",
@@ -206,7 +219,7 @@
                         },
                         {
                             "name": "ComsosDatabase",
-                            "value": "[parameters('CosmosDBAccount')]"
+                            "value": "[parameters('CosmosDBDatabase')]"
                         },
                         {
                             "name": "CosmosCollection",
@@ -218,7 +231,7 @@
                         },
                         {
                             "name": "WEBSITE_RUN_FROM_PACKAGE",
-                            "value": "[concat('https://',variables('storageAccountName'),'.blob.core.windows.net/functionfiles/', variables('FunctionZipName'))]"
+                            "value": "[concat('https://',variables('storageAccountName'),'.blob.core.windows.net/',parameters('functionContainerName'),'/', variables('FunctionZipName'))]"
                         }
                     ]
                 }
