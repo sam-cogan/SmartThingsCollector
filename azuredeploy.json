@@ -67,6 +67,13 @@
            "metadata": {
                 "description": "Resource Group that contains your Cosmos DB instance"
             }
+        },
+        "UploadFunctionFiles":{
+            "type":"bool",
+            "metadata": {
+                "description":"Whether to run the ACI instance to upload the Function data to storage"
+            },
+            "defaultValue": true   
         }
     },
     "variables": {
@@ -123,6 +130,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]"
             ],
+            "condition":"[parameters('UploadFunctionFiles')]",
             "properties": {
                 "containers": [
                     {
